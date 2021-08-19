@@ -52,6 +52,7 @@ public class LockableResource extends AbstractDescribableImpl<LockableResource>
 
   private final String name;
   private String description = "";
+  private String message = "";
   private String labels = "";
   private String reservedBy = null;
   private boolean ephemeral;
@@ -105,6 +106,11 @@ public class LockableResource extends AbstractDescribableImpl<LockableResource>
   }
 
   @DataBoundSetter
+  public void setMessage(String message) {
+    this.message = message;
+  }
+
+  @DataBoundSetter
   public void setLabels(String labels) {
     this.labels = labels;
   }
@@ -117,6 +123,11 @@ public class LockableResource extends AbstractDescribableImpl<LockableResource>
   @Exported
   public String getDescription() {
     return description;
+  }
+
+  @Exported
+  public String getMessage() {
+    return message;
   }
 
   @Exported

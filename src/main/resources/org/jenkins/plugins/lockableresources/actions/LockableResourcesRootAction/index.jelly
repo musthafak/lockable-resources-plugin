@@ -21,6 +21,7 @@
             <td class="pane-header">Status</td>
             <td class="pane-header">Labels</td>
             <td class="pane-header">Ephemeral</td>
+            <td class="pane-header">Message</td>
             <td class="pane-header">Action</td>
           </tr>
           <j:forEach var="resource" items="${it.resources}" indexVar="i">
@@ -42,6 +43,9 @@
                 </td>
                 <td class="pane">${resource.labels}</td>
                 <td class="pane">${resource.ephemeral}</td>
+                <td class="pane" style="color: orange;">
+                  <strong>${resource.message}</strong>
+                </td>
                 <td class="pane">
                   <j:if test="${h.hasPermission(it.UNLOCK)}">
                     <button onClick="resource_action(this, 'unlock');">Unlock</button>
@@ -57,6 +61,9 @@
                   </td>
                   <td class="pane">${resource.labels}</td>
                   <td class="pane">${resource.ephemeral}</td>
+                  <td class="pane" style="color: orange;">
+                    <strong>${resource.message}</strong>
+                  </td>
                   <td class="pane">
                     <j:if test="${h.hasPermission(it.RESERVE)}">
                       <j:if
@@ -73,6 +80,9 @@
                     </td>
                     <td class="pane">${resource.labels}</td>
                     <td class="pane">${resource.ephemeral}</td>
+                    <td class="pane" style="color: orange;">
+                      <strong>${resource.message}</strong>
+                    </td>
                     <td class="pane">
                       <j:if test="${h.hasPermission(it.UNLOCK)}">
                         <button onClick="resource_action(this, 'reset');">ResetResource</button>
@@ -85,6 +95,9 @@
                     </td>
                     <td class="pane">${resource.labels}</td>
                     <td class="pane">${resource.ephemeral}</td>
+                    <td class="pane" style="color: orange;">
+                      <strong>${resource.message}</strong>
+                    </td>
                     <td class="pane">
                       <j:if test="${h.hasPermission(it.RESERVE) and it.UserName != null}">
                         <button onClick="resource_action(this, 'reserve');">Reserve</button>
