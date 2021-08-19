@@ -57,7 +57,7 @@ public class LockableResourcesRootAction implements RootAction {
 	public String getUserName() {
 		User current = User.current();
 		if (current != null)
-			return current.getFullName();
+			return current.getId();
 		else
 			return null;
 	}
