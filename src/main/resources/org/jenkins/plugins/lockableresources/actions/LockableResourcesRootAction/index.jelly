@@ -95,12 +95,18 @@
                     </td>
                     <td class="pane">${resource.labels}</td>
                     <td class="pane">${resource.ephemeral}</td>
-                    <td class="pane" style="color: orange;">
-                      <strong>${resource.message}</strong>
+                    <td class="pane">
+                      <strong style="color: orange;" class="resource-message">${resource.message}</strong>
+                      <input style="display: none; width: 100%;" type="text" placeholder="Please type your message..."/>
                     </td>
                     <td class="pane">
                       <j:if test="${h.hasPermission(it.RESERVE) and it.UserName != null}">
-                        <button onClick="resource_action(this, 'reserve');">Reserve</button>
+                        <div style="display: flex;">
+                          <button class="action-button" style="display: none; margin: 5px 5px 5px 0px;"
+                              onClick="resource_action(this, 'reserve');">Submit</button>
+                          <button class="toggle-button" style="display: block; margin: auto;"
+                              onClick="toggle_reserve(this);">Reserve</button>
+                        </div>
                       </j:if>
                     </td>
                   </j:if>
