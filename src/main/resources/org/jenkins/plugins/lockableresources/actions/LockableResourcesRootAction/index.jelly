@@ -19,6 +19,7 @@
           <tr>
             <td class="pane-header">Resource</td>
             <td class="pane-header">Status</td>
+            <td class="pane-header">Latest Update</td>
             <td class="pane-header">Labels</td>
             <td class="pane-header">Ephemeral</td>
             <td class="pane-header">Message</td>
@@ -41,6 +42,7 @@
                     ${resource.build.fullDisplayName}
                   </a>
                 </td>
+                <td class="pane">${resource.latestUpdate}</td>
                 <td class="pane">${resource.labels}</td>
                 <td class="pane">${resource.ephemeral}</td>
                 <td class="pane" style="color: orange;">
@@ -59,6 +61,7 @@
                     by
                     <strong>${resource.reservedBy}</strong>
                   </td>
+                  <td class="pane">${resource.latestUpdate}</td>
                   <td class="pane">${resource.labels}</td>
                   <td class="pane">${resource.ephemeral}</td>
                   <td class="pane" style="color: orange;">
@@ -78,6 +81,7 @@
                     <td class="pane" style="color: yellow;">
                       QUEUED by "${resource.queueItemProject} ${resource.queueItemId}"
                     </td>
+                    <td class="pane">${resource.latestUpdate}</td>
                     <td class="pane">${resource.labels}</td>
                     <td class="pane">${resource.ephemeral}</td>
                     <td class="pane" style="color: orange;">
@@ -93,6 +97,7 @@
                     <td class="pane" style="color: green;">
                       <strong>FREE</strong>
                     </td>
+                    <td class="pane">${resource.latestUpdate}</td>
                     <td class="pane">${resource.labels}</td>
                     <td class="pane">${resource.ephemeral}</td>
                     <td class="pane">

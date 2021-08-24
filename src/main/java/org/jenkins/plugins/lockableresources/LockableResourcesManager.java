@@ -94,6 +94,7 @@ public class LockableResourcesManager extends GlobalConfiguration {
         // Merge already locked lock.
         locked.setDescription(r.getDescription());
         locked.setMessage(r.getMessage());
+        locked.setLatestUpdate(r.getLatestUpdate());
         locked.setLabels(r.getLabels());
         locked.setEphemeral(false);
         mergedResources.add(locked);
@@ -106,6 +107,7 @@ public class LockableResourcesManager extends GlobalConfiguration {
       // Removed locks became ephemeral.
       r.setDescription("");
       r.setMessage("");
+      r.updateTimestamp();
       r.setLabels("");
       r.setEphemeral(true);
       mergedResources.add(r);

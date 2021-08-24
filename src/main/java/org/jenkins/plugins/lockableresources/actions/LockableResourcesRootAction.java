@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Set;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.jenkins.plugins.lockableresources.LockableResource;
 import org.jenkins.plugins.lockableresources.LockableResourcesManager;
 import org.jenkins.plugins.lockableresources.Messages;
@@ -115,13 +117,14 @@ public class LockableResourcesRootAction implements RootAction {
 		String name = req.getParameter("resource");
 		String message = req.getParameter("message");
 		LockableResource r = LockableResourcesManager.get().fromName(name);
+
 		if (r == null) {
 			rsp.sendError(404, "Resource not found " + name);
 			return;
 		}
 
 		if (message == null || message.trim().isEmpty() || message.length() < 3) {
-			rsp.sendError(403, "Invalid message");
+			rsp.sendError(403, "Invalid message...!");
 			return;
 		}
 
@@ -179,5 +182,33 @@ public class LockableResourcesRootAction implements RootAction {
 		LockableResourcesManager.get().reset(resources);
 
 		rsp.forwardToPreviousPage(req);
+	}
+
+	@RequirePOST
+	public void doResources(StaplerRequest req, StaplerResponse rsp)
+		throws IOException, ServletException {
+		Jenkins.get().checkPermission(VIEW);
+
+		JSONArray ja = new JSONArray();
+		List<LockableResource> resources = LockableResourcesManager.get().getResources();
+
+		for (LockableResource r : resources) {
+			JSONObject jo = new JSONObject();
+			jo.put("name", r.getName());
+			jo.put("description", r.getDescription());
+			jo.put("isLocked", r.isLocked());
+			jo.put("isReserved", r.isReserved());
+			jo.put("isQueued", r.isQueued());
+			jo.put("lockedBy", r.getBuildName());
+			jo.put("reservedBy", r.getReservedBy());
+			jo.put("message", r.getMessage());
+			jo.put("labels", r.getLabels());
+			jo.put("ephemeral", r.isEphemeral());
+			jo.put("latestUpdate", r.getLatestUpdate());
+			ja.put(jo);
+		}
+		rsp.setContentType("application/json");
+		rsp.setHeader("Cache-Control", "no-cache, no-store, no-transform");
+		ja.write(rsp.getWriter());
 	}
 }

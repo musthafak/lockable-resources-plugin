@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
@@ -56,6 +58,7 @@ public class LockableResource extends AbstractDescribableImpl<LockableResource>
   private String labels = "";
   private String reservedBy = null;
   private boolean ephemeral;
+  private String latestUpdate = "";
 
   private long queueItemId = NOT_QUEUED;
   private String queueItemProject = null;
@@ -145,6 +148,21 @@ public class LockableResource extends AbstractDescribableImpl<LockableResource>
     return ephemeral;
   }
 
+  @Exported
+  public String getLatestUpdate() {
+    return latestUpdate;
+  }
+
+  @DataBoundSetter
+  public void setLatestUpdate(String timestamp) {
+    this.latestUpdate = timestamp;
+  }
+
+  public void updateTimestamp() {
+    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss z");
+    this.setLatestUpdate(fmt.format(ZonedDateTime.now()));
+  }
+
   public boolean isValidLabel(String candidate, Map<String, Object> params) {
     return labelsContain(candidate);
   }
@@ -232,6 +250,7 @@ public class LockableResource extends AbstractDescribableImpl<LockableResource>
   }
 
   public void unqueue() {
+    this.updateTimestamp();
     queueItemId = NOT_QUEUED;
     queueItemProject = null;
     queuingStarted = 0;
@@ -283,6 +302,7 @@ public class LockableResource extends AbstractDescribableImpl<LockableResource>
   }
 
   public void setBuild(Run<?, ?> lockedBy) {
+    this.updateTimestamp();
     this.build = lockedBy;
     if (lockedBy != null) {
       this.buildExternalizableId = lockedBy.getExternalizableId();
@@ -311,6 +331,7 @@ public class LockableResource extends AbstractDescribableImpl<LockableResource>
   }
 
   public void setQueued(long queueItemId) {
+    this.updateTimestamp();
     this.queueItemId = queueItemId;
     this.queuingStarted = System.currentTimeMillis() / 1000;
   }
@@ -330,10 +351,12 @@ public class LockableResource extends AbstractDescribableImpl<LockableResource>
   @DataBoundSetter
   public void setReservedBy(String userName) {
     this.reservedBy = Util.fixEmptyAndTrim(userName);
+    this.updateTimestamp();
   }
 
   public void unReserve() {
     this.reservedBy = null;
+    this.updateTimestamp();
   }
 
   public void reset() {
