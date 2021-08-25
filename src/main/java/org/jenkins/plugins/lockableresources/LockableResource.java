@@ -250,7 +250,6 @@ public class LockableResource extends AbstractDescribableImpl<LockableResource>
   }
 
   public void unqueue() {
-    this.updateTimestamp();
     queueItemId = NOT_QUEUED;
     queueItemProject = null;
     queuingStarted = 0;
@@ -302,7 +301,6 @@ public class LockableResource extends AbstractDescribableImpl<LockableResource>
   }
 
   public void setBuild(Run<?, ?> lockedBy) {
-    this.updateTimestamp();
     this.build = lockedBy;
     if (lockedBy != null) {
       this.buildExternalizableId = lockedBy.getExternalizableId();
@@ -331,7 +329,6 @@ public class LockableResource extends AbstractDescribableImpl<LockableResource>
   }
 
   public void setQueued(long queueItemId) {
-    this.updateTimestamp();
     this.queueItemId = queueItemId;
     this.queuingStarted = System.currentTimeMillis() / 1000;
   }
@@ -351,12 +348,10 @@ public class LockableResource extends AbstractDescribableImpl<LockableResource>
   @DataBoundSetter
   public void setReservedBy(String userName) {
     this.reservedBy = Util.fixEmptyAndTrim(userName);
-    this.updateTimestamp();
   }
 
   public void unReserve() {
     this.reservedBy = null;
-    this.updateTimestamp();
   }
 
   public void reset() {

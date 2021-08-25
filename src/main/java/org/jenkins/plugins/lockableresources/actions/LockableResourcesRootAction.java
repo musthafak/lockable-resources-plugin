@@ -11,6 +11,7 @@ package org.jenkins.plugins.lockableresources.actions;
 import hudson.Extension;
 import hudson.model.RootAction;
 import hudson.model.User;
+import hudson.model.Run;
 import hudson.security.AccessDeniedException2;
 import hudson.security.Permission;
 import hudson.security.PermissionGroup;
@@ -19,10 +20,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkins.plugins.lockableresources.LockableResource;
 import org.jenkins.plugins.lockableresources.LockableResourcesManager;
 import org.jenkins.plugins.lockableresources.Messages;
@@ -90,6 +93,55 @@ public class LockableResourcesRootAction implements RootAction {
 		return LockableResourcesManager.get().getAllLabels().size();
 	}
 
+	private Run getJenkinsBuild(String job, String build) {
+		Jenkins jenkins = Jenkins.get();
+		if (job == null || job.trim().isEmpty() || build == null || build.trim().isEmpty()) {
+			return null;
+		}
+
+		WorkflowJob jenkinsJob = (WorkflowJob) jenkins.getItem(job);
+		if (jenkinsJob == null) {
+			return null;
+		}
+		return (Run) jenkinsJob.getBuildByNumber(Integer.parseInt(build));
+	}
+
+	@RequirePOST
+	public void doLock(StaplerRequest req, StaplerResponse rsp)
+		throws IOException, ServletException {
+		Jenkins.get().checkPermission(UNLOCK);
+		String name = req.getParameter("resource");
+		String message = req.getParameter("message");
+		String job = req.getParameter("job");
+		String build = req.getParameter("build");
+		LockableResource r = LockableResourcesManager.get().fromName(name);
+
+		if (r == null) {
+			rsp.sendError(404, "Resource not found " + name);
+			return;
+		}
+
+		if (message == null || message.trim().isEmpty() || message.length() < 3) {
+			rsp.sendError(400, "Invalid message...!");
+			return;
+		}
+		Run jenkinsBuild = getJenkinsBuild(job, build);
+		if (jenkinsBuild == null) {
+			rsp.sendError(404, "Unable to find build...!");
+			return;
+		}
+		Set<LockableResource> resources = new HashSet<LockableResource>();
+		r.setMessage(message);
+		r.updateTimestamp();
+		resources.add(r);
+		boolean status = LockableResourcesManager.get().lock(resources, jenkinsBuild, null);
+		if (!status) {
+			rsp.sendError(409, "Requested resource is in use...!");
+			return;
+		}
+		rsp.forwardToPreviousPage(req);
+	}
+
 	@RequirePOST
 	public void doUnlock(StaplerRequest req, StaplerResponse rsp)
 			throws IOException, ServletException {
@@ -103,6 +155,8 @@ public class LockableResourcesRootAction implements RootAction {
 		}
 
 		List<LockableResource> resources = new ArrayList<>();
+		r.setMessage("");
+		r.updateTimestamp();
 		resources.add(r);
 		LockableResourcesManager.get().unlock(resources, null);
 
@@ -113,7 +167,6 @@ public class LockableResourcesRootAction implements RootAction {
 	public void doReserve(StaplerRequest req, StaplerResponse rsp)
 		throws IOException, ServletException {
 		Jenkins.get().checkPermission(RESERVE);
-
 		String name = req.getParameter("resource");
 		String message = req.getParameter("message");
 		LockableResource r = LockableResourcesManager.get().fromName(name);
@@ -124,17 +177,22 @@ public class LockableResourcesRootAction implements RootAction {
 		}
 
 		if (message == null || message.trim().isEmpty() || message.length() < 3) {
-			rsp.sendError(403, "Invalid message...!");
+			rsp.sendError(400, "Invalid message...!");
 			return;
 		}
 
 		List<LockableResource> resources = new ArrayList<>();
 		r.setMessage(message);
+		r.updateTimestamp();
 		resources.add(r);
 		String userName = getUserName();
+		boolean status = false;
 		if (userName != null)
-			LockableResourcesManager.get().reserve(resources, userName);
-
+			status = LockableResourcesManager.get().reserve(resources, userName);
+		if (!status) {
+			rsp.sendError(409, "Requested resource is in use...!");
+			return;
+		}
 		rsp.forwardToPreviousPage(req);
 	}
 
@@ -158,6 +216,7 @@ public class LockableResourcesRootAction implements RootAction {
 
 		List<LockableResource> resources = new ArrayList<>();
 		r.setMessage("");
+		r.updateTimestamp();
 		resources.add(r);
 		LockableResourcesManager.get().unreserve(resources);
 
@@ -178,6 +237,7 @@ public class LockableResourcesRootAction implements RootAction {
 
 		List<LockableResource> resources = new ArrayList<>();
 		r.setMessage("");
+		r.updateTimestamp();
 		resources.add(r);
 		LockableResourcesManager.get().reset(resources);
 

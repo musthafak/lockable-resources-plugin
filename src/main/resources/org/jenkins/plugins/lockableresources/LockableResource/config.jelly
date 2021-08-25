@@ -26,4 +26,9 @@
 	<f:entry title="${%Reserved by}" field="reservedBy">
 		<f:textbox/>
 	</f:entry>
+	<div style="display: none;">
+		<f:entry title="${%Latest update}" field="latestUpdate">
+			<f:textbox/>
+		</f:entry>
+	</div>
 </j:jelly>
