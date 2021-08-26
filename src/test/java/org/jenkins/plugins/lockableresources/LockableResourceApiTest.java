@@ -7,6 +7,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThrows;
 
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import hudson.security.FullControlOnceLoggedInAuthorizationStrategy;
 import org.junit.Rule;
@@ -27,7 +28,10 @@ public class LockableResourceApiTest {
 
     JenkinsRule.WebClient wc = j.createWebClient();
     wc.login("user");
-    TestHelpers.clickButton(wc, "reserve");
+    HtmlPage htmlPage = wc.goTo("lockable-resources");
+    TestHelpers.clickButton(htmlPage, "toggle_reserve");
+    TestHelpers.setText(htmlPage, "message", "Test message");
+    TestHelpers.clickButton(htmlPage, "resource_action");
     assertThat(LockableResourcesManager.get().fromName("a1").isReserved(), is(true));
     TestHelpers.clickButton(wc, "unreserve");
     assertThat(LockableResourcesManager.get().fromName("a1").isReserved(), is(false));

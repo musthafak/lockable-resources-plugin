@@ -10,6 +10,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
+import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 import com.gargoylesoftware.htmlunit.html.HtmlElementUtil;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import hudson.model.FreeStyleProject;
@@ -73,9 +74,7 @@ public final class TestHelpers {
     return rule.getJSON("plugin/lockable-resources/api/json").getJSONObject();
   }
 
-  // Currently assumes one resource or only clicks the button for the first resource
-  public static void clickButton(JenkinsRule.WebClient wc, String action) throws Exception {
-    HtmlPage htmlPage = wc.goTo("lockable-resources");
+  public static void clickButton(HtmlPage htmlPage, String action) throws Exception {
     List<HtmlElement> allButtons = htmlPage.getDocumentElement().getElementsByTagName("button");
 
     HtmlElement reserveButton = null;
@@ -86,5 +85,25 @@ public final class TestHelpers {
       }
     }
     HtmlElementUtil.click(reserveButton);
+  }
+
+  // Currently assumes one resource or only clicks the button for the first resource
+  public static void clickButton(JenkinsRule.WebClient wc, String action) throws Exception {
+    HtmlPage htmlPage = wc.goTo("lockable-resources");
+    clickButton(htmlPage, action);
+  }
+
+  // Currently assumes one resource or only clicks the button for the first resource
+  public static void setText(HtmlPage htmlPage, String className, String text) throws Exception {
+    List<HtmlElement> allButtons = htmlPage.getDocumentElement().getElementsByTagName("input");
+
+    HtmlTextInput inputElement = null;
+    for (HtmlElement b : allButtons) {
+      String classAtr = b.getAttribute("class");
+      if (classAtr != null && classAtr.contains(className)) {
+        inputElement = (HtmlTextInput) b;
+      }
+    }
+    inputElement.setText(text);
   }
 }
