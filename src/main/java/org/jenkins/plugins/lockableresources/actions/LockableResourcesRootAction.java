@@ -130,7 +130,6 @@ public class LockableResourcesRootAction implements RootAction {
 		}
 		Set<LockableResource> resources = new HashSet<LockableResource>();
 		r.setMessage(message);
-		r.updateTimestamp();
 		resources.add(r);
 		boolean status = LockableResourcesManager.get().lock(resources, jenkinsBuild, null);
 		if (!status) {
@@ -154,7 +153,6 @@ public class LockableResourcesRootAction implements RootAction {
 
 		List<LockableResource> resources = new ArrayList<>();
 		r.setMessage("");
-		r.updateTimestamp();
 		resources.add(r);
 		LockableResourcesManager.get().unlock(resources, null);
 
@@ -181,7 +179,6 @@ public class LockableResourcesRootAction implements RootAction {
 
 		List<LockableResource> resources = new ArrayList<>();
 		r.setMessage(message);
-		r.updateTimestamp();
 		resources.add(r);
 		String userName = getUserName();
 		boolean status = false;
@@ -214,7 +211,6 @@ public class LockableResourcesRootAction implements RootAction {
 
 		List<LockableResource> resources = new ArrayList<>();
 		r.setMessage("");
-		r.updateTimestamp();
 		resources.add(r);
 		LockableResourcesManager.get().unreserve(resources);
 
@@ -235,7 +231,6 @@ public class LockableResourcesRootAction implements RootAction {
 
 		List<LockableResource> resources = new ArrayList<>();
 		r.setMessage("");
-		r.updateTimestamp();
 		resources.add(r);
 		LockableResourcesManager.get().reset(resources);
 

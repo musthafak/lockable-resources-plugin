@@ -139,7 +139,20 @@ public class LockableResourcesManager extends GlobalConfiguration {
   }
 
   public Boolean isValidLabel(String label) {
-    return this.getAllLabels().contains(label);
+    if (label == null || label.trim().isEmpty()) {
+        return false;
+    }
+    boolean isValid = true;
+    String[] labels = label.split("\\s+");
+    Set<String> allLabels = this.getAllLabels();
+    for (String l : labels) {
+        if (!allLabels.contains(l)) {
+            isValid = false;
+            break;
+        }
+    }
+
+    return isValid;
   }
 
   public Set<String> getAllLabels() {
@@ -367,6 +380,7 @@ public class LockableResourcesManager extends GlobalConfiguration {
       for (LockableResource r : resources) {
         r.unqueue();
         r.setBuild(build);
+        r.updateTimestamp();
       }
       if (context != null) {
         // since LockableResource contains transient variables, they cannot be correctly serialized
@@ -399,6 +413,7 @@ public class LockableResourcesManager extends GlobalConfiguration {
             // No more contexts, unlock resource
             resource.unqueue();
             resource.setBuild(null);
+            resource.updateTimestamp();
             if (resource.isEphemeral()) {
               resourceIterator.remove();
             }
@@ -481,6 +496,7 @@ public class LockableResourcesManager extends GlobalConfiguration {
         for (LockableResource requiredResource : requiredResourceForNextContext) {
           try {
             requiredResource.setBuild(nextContext.getContext().get(Run.class));
+            requiredResource.updateTimestamp();
             resourceNamesToLock.add(requiredResource.getName());
           } catch (Exception e) {
             // skip this context, as the build cannot be retrieved (maybe it was deleted while
@@ -614,6 +630,7 @@ public class LockableResourcesManager extends GlobalConfiguration {
     }
     for (LockableResource r : resources) {
       r.setReservedBy(userName);
+      r.updateTimestamp();
     }
     save();
     return true;
@@ -622,6 +639,7 @@ public class LockableResourcesManager extends GlobalConfiguration {
   private void unreserveResources(@NonNull List<LockableResource> resources) {
     for (LockableResource l : resources) {
       l.unReserve();
+      l.updateTimestamp();
     }
     save();
   }
@@ -694,6 +712,7 @@ public class LockableResourcesManager extends GlobalConfiguration {
       for (LockableResource requiredResource : requiredResourceForNextContext) {
         try {
           requiredResource.setBuild(nextContext.getContext().get(Run.class));
+          requiredResource.updateTimestamp();
           resourceNamesToLock.add(requiredResource.getName());
         } catch (Exception e) {
           // skip this context, as the build cannot be retrieved (maybe it was deleted while
