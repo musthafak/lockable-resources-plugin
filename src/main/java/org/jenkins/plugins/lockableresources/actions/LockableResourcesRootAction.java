@@ -23,7 +23,6 @@ import java.util.Set;
 import java.util.HashSet;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkins.plugins.lockableresources.LockableResource;
@@ -289,18 +288,20 @@ public class LockableResourcesRootAction implements RootAction {
 				lr = LockableResourcesManager.get().reserveFreeResource(
 						label, message, userName);
 			}
+			if (lr == null) {
+				rsp.sendError(404, "Resource not available....!");
+				return;
+			}
 		} else {
 			rsp.sendError(400, "Invalid parameters....!");
 			return;
 		}
-		if (lr == null) {
-			rsp.sendError(404, "Resource not available....!");
-			return;
-		}
 
+		JSONObject jo = new JSONObject();
+		jo.put("resource", lr.getName());
 		rsp.setContentType("application/json");
 		rsp.setHeader("Cache-Control", "no-cache, no-store, no-transform");
-		rsp.getWriter().write(lr.getName());
+		jo.write(rsp.getWriter());
 	}
 
 	@RequirePOST
@@ -355,5 +356,38 @@ public class LockableResourcesRootAction implements RootAction {
 			return;
 		}
 		LockableResourcesManager.get().updateMessage(lr, message);
+	}
+
+	@RequirePOST
+	public void doFetchInfo(StaplerRequest req, StaplerResponse rsp)
+		throws IOException, ServletException {
+		Jenkins.get().checkPermission(VIEW);
+		String name = req.getParameter("resource");
+		LockableResource lr = null;
+
+		if (name != null && !name.trim().isEmpty()) {
+			lr = LockableResourcesManager.get().fromName(name);
+			if (lr == null) {
+				rsp.sendError(404, "Resource not found " + name);
+				return;
+			}
+		} else {
+			rsp.sendError(400, "Invalid parameters....!");
+			return;
+		}
+
+		JSONObject jo = new JSONObject();
+		jo.put("resource", lr.getName());
+		jo.put("description", lr.getDescription());
+		jo.put("message", lr.getMessage());
+		jo.put("latestUpdate", lr.getLatestUpdate());
+		jo.put("isReserved", lr.isReserved());
+		jo.put("isLocked", lr.isLocked());
+		jo.put("isQueued", lr.isQueued());
+		jo.put("buildName", lr.getBuildName());
+		jo.put("reservedBy", lr.getReservedBy());
+		rsp.setContentType("application/json");
+		rsp.setHeader("Cache-Control", "no-cache, no-store, no-transform");
+		jo.write(rsp.getWriter());
 	}
 }
