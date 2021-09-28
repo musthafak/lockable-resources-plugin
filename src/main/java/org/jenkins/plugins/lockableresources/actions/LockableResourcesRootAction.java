@@ -255,6 +255,7 @@ public class LockableResourcesRootAction implements RootAction {
 		String build = req.getParameter("build");
 
 		LockableResource lr = null;
+		boolean isUserReserved = false;
 
 		if (message == null || message.trim().length() < 3) {
 			rsp.sendError(400, "Invalid message...!");
@@ -271,6 +272,15 @@ public class LockableResourcesRootAction implements RootAction {
 					rsp.sendError(401, "Unauthorized to reserve...!");
 					return;
 				}
+				isUserReserved = true;
+			} else if (lr.isLocked()) {
+				String buildName = lr.getBuildName();
+				Run jenkinsBuild = getJenkinsBuild(job, build);
+				if (jenkinsBuild == null || !buildName.equals(jenkinsBuild.getFullDisplayName())) {
+					rsp.sendError(401, "Unauthorized to reserve...!");
+					return;
+				}
+				isUserReserved = true;
 			} else {
 				boolean status = reserveResource(lr, message);
 				if (!status) {
@@ -279,6 +289,7 @@ public class LockableResourcesRootAction implements RootAction {
 				}
 			}
 		} else if (label != null && !label.trim().isEmpty()) {
+			label = label.replace(",", " ");
 			Run jenkinsBuild = getJenkinsBuild(job, build);
 			if (jenkinsBuild != null) {
 				lr = LockableResourcesManager.get().lockFreeResource(
@@ -299,6 +310,8 @@ public class LockableResourcesRootAction implements RootAction {
 
 		JSONObject jo = new JSONObject();
 		jo.put("resource", lr.getName());
+		jo.put("message", lr.getMessage());
+		jo.put("isUserReserved", isUserReserved);
 		rsp.setContentType("application/json");
 		rsp.setHeader("Cache-Control", "no-cache, no-store, no-transform");
 		jo.write(rsp.getWriter());
