@@ -19,6 +19,7 @@ import hudson.model.listeners.RunListener;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.ArrayList;
 import java.util.logging.Logger;
 import org.jenkins.plugins.lockableresources.LockableResource;
 import org.jenkins.plugins.lockableresources.LockableResourcesManager;
@@ -86,12 +87,20 @@ public class LockRunListener extends RunListener<Run<?, ?>> {
 		// obviously project name cannot be obtained here
 		List<LockableResource> required = LockableResourcesManager.get()
 				.getResourcesFromBuild(build);
-		if (!required.isEmpty()) {
-			LockableResourcesManager.get().unlock(required, build);
+		// Filter resources which is manually reserved
+		List<LockableResource> resourcesToUnlock = new ArrayList<LockableResource>();
+		for (LockableResource lr : required) {
+			String message = lr.getMessage();
+			if (message == null || message.trim().isEmpty()) {
+				resourcesToUnlock.add(lr);
+			}
+		}
+		if (!resourcesToUnlock.isEmpty()) {
+			LockableResourcesManager.get().unlock(resourcesToUnlock, build);
 			listener.getLogger().printf("%s released lock on %s%n",
-					LOG_PREFIX, required);
+					LOG_PREFIX, resourcesToUnlock);
 			LOGGER.fine(build.getFullDisplayName() + " released lock on "
-					+ required);
+					+ resourcesToUnlock);
 		}
 
 	}
