@@ -12,7 +12,6 @@ import hudson.Extension;
 import hudson.model.RootAction;
 import hudson.model.User;
 import hudson.model.Run;
-import hudson.model.Cause.UpstreamCause;
 import hudson.security.AccessDeniedException2;
 import hudson.security.Permission;
 import hudson.security.PermissionGroup;
@@ -21,7 +20,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import org.json.JSONObject;
@@ -127,55 +125,6 @@ public class LockableResourcesRootAction implements RootAction {
 		resource.setMessage("");
 		resources.add(resource);
 		LockableResourcesManager.get().unlock(resources, null);
-	}
-
-	private boolean checkUpstreamBuild(String buildName, Run jenkinsBuild) {
-		boolean buildMatches = false;
-		try {
-			UpstreamCause uc = (UpstreamCause) jenkinsBuild.getCauses().get(0);
-			if (uc != null) {
-				Run build = uc.getUpstreamRun();
-				if (build != null && buildName.equals(build.getFullDisplayName())) {
-					buildMatches = true;
-				}
-			}
-		} catch (ClassCastException e) {}
-		return buildMatches;
-	}
-
-	@RequirePOST
-	public void doLock(StaplerRequest req, StaplerResponse rsp)
-		throws IOException, ServletException {
-		Jenkins.get().checkPermission(UNLOCK);
-		String name = req.getParameter("resource");
-		String message = req.getParameter("message");
-		String job = req.getParameter("job");
-		String build = req.getParameter("build");
-		LockableResource r = LockableResourcesManager.get().fromName(name);
-
-		if (r == null) {
-			rsp.sendError(404, "Resource not found " + name);
-			return;
-		}
-
-		if (message == null || message.trim().length() < 3) {
-			rsp.sendError(400, "Invalid message...!");
-			return;
-		}
-		Run jenkinsBuild = getJenkinsBuild(job, build);
-		if (jenkinsBuild == null) {
-			rsp.sendError(404, "Unable to find build...!");
-			return;
-		}
-		Set<LockableResource> resources = new HashSet<LockableResource>();
-		r.setMessage(message);
-		resources.add(r);
-		boolean status = LockableResourcesManager.get().lock(resources, jenkinsBuild, null);
-		if (!status) {
-			rsp.sendError(409, "Requested resource is in use...!");
-			return;
-		}
-		rsp.forwardToPreviousPage(req);
 	}
 
 	@RequirePOST
@@ -311,42 +260,6 @@ public class LockableResourcesRootAction implements RootAction {
 	}
 
 	@RequirePOST
-	public void doRelease(StaplerRequest req, StaplerResponse rsp)
-		throws IOException, ServletException {
-		Jenkins.get().checkPermission(RESERVE);
-		String name = req.getParameter("resource");
-		LockableResource lr = LockableResourcesManager.get().fromName(name);
-		if (lr == null) {
-			rsp.sendError(404, "Resource not found " + name);
-			return;
-		}
-		if (lr.isReserved()) {
-			String userName = getUserName();
-			if (userName == null || !userName.equals(lr.getReservedBy())) {
-				rsp.sendError(401, "Unauthorized to unreserve...!");
-				return;
-			}
-			unreserveResource(lr);
-		} else if (lr.isLocked()) {
-			String job = req.getParameter("job");
-			String build = req.getParameter("build");
-			String buildName = lr.getBuildName();
-			Run jenkinsBuild = getJenkinsBuild(job, build);
-			if (jenkinsBuild == null || !buildName.equals(jenkinsBuild.getFullDisplayName())) {
-				rsp.sendError(401, "Unauthorized to unlock...!");
-				return;
-			}
-			unlockResource(lr);
-		} else {
-			rsp.sendError(400, "Resource is not locked/reserved...!");
-			return;
-		}
-		rsp.setContentType("application/json");
-		rsp.setHeader("Cache-Control", "no-cache, no-store, no-transform");
-		rsp.getWriter().write("true");
-	}
-
-	@RequirePOST
 	public void doUpdateMessage(StaplerRequest req, StaplerResponse rsp)
 		throws IOException, ServletException {
 		Jenkins.get().checkPermission(RESERVE);
@@ -362,39 +275,5 @@ public class LockableResourcesRootAction implements RootAction {
 			return;
 		}
 		LockableResourcesManager.get().updateMessage(lr, message);
-	}
-
-	@RequirePOST
-	public void doFetchInfo(StaplerRequest req, StaplerResponse rsp)
-		throws IOException, ServletException {
-		Jenkins.get().checkPermission(VIEW);
-		String name = req.getParameter("resource");
-		LockableResource lr = null;
-
-		if (name != null && !name.trim().isEmpty()) {
-			lr = LockableResourcesManager.get().fromName(name);
-			if (lr == null) {
-				rsp.sendError(404, "Resource not found " + name);
-				return;
-			}
-		} else {
-			rsp.sendError(400, "Invalid parameters....!");
-			return;
-		}
-
-		JSONObject jo = new JSONObject();
-		jo.put("resource", lr.getName());
-		jo.put("description", lr.getDescription());
-		jo.put("message", lr.getMessage());
-		jo.put("latestUpdate", lr.getLatestUpdate());
-		jo.put("isReserved", lr.isReserved());
-		jo.put("isLocked", lr.isLocked());
-		jo.put("isQueued", lr.isQueued());
-		jo.put("buildName", lr.getBuildName());
-		jo.put("reservedBy", lr.getReservedBy());
-		jo.put("labels", lr.getLabels());
-		rsp.setContentType("application/json");
-		rsp.setHeader("Cache-Control", "no-cache, no-store, no-transform");
-		jo.write(rsp.getWriter());
 	}
 }
