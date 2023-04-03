@@ -200,6 +200,41 @@ public class LockableResourcesManager extends GlobalConfiguration {
     return found;
   }
 
+  public LockableResource lockFreeResource(String label, Run<?, ?> build, String message) {
+    LockableResource found = null;
+    for (LockableResource r : getResourcesWithLabel(label, null)) {
+      if (r.isLocked() || r.isReserved() || r.isQueued()) continue;
+      List<LockableResource> rl = new ArrayList<>();
+      rl.add(r);
+      if (lock(rl, build, null)) {
+        found = r;
+        updateNote(r, message);
+        break;
+      }
+    }
+    return found;
+  }
+
+  public LockableResource reserveFreeResource(String label, String message, String userName) {
+    LockableResource found = null;
+    for (LockableResource r : getResourcesWithLabel(label, null)) {
+      if (r.isLocked() || r.isReserved() || r.isQueued()) continue;
+      List<LockableResource> rl = new ArrayList<>();
+      rl.add(r);
+      if (reserve(rl, userName)) {
+        found = r;
+        updateNote(r, message);
+        break;
+      }
+    }
+    return found;
+  }
+
+  public synchronized void updateNote(LockableResource resource, String message) {
+    resource.setNote(message);
+    save();
+  }
+
   /**
    * Get a list of resources matching the script.
    *

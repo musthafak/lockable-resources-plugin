@@ -104,12 +104,19 @@ public class LockRunListener extends RunListener<Run<?, ?>> {
     // obviously project name cannot be obtained here
     List<LockableResource> required = LockableResourcesManager.get()
       .getResourcesFromBuild(build);
-    if (!required.isEmpty()) {
-      LockableResourcesManager.get().unlock(required, build);
+    List<LockableResource> resourcesToUnlock = new ArrayList<LockableResource>();
+    for (LockableResource lr : required) {
+        String note = lr.getNote();
+        if (note == null || note.trim().isEmpty()) {
+            resourcesToUnlock.add(lr);
+        }
+    }
+    if (!resourcesToUnlock.isEmpty()) {
+      LockableResourcesManager.get().unlock(resourcesToUnlock, build);
       listener.getLogger().printf("%s released lock on %s%n",
-        LOG_PREFIX, required);
+        LOG_PREFIX, resourcesToUnlock);
       LOGGER.fine(build.getFullDisplayName() + " released lock on "
-        + required);
+        + resourcesToUnlock);
     }
 
   }

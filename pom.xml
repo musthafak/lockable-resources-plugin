@@ -11,7 +11,7 @@
 
   <groupId>org.6wind.jenkins</groupId>
   <artifactId>lockable-resources</artifactId>
-  <version>${changelist}</version>
+  <version>${changelist}+lgi</version>
   <packaging>hpi</packaging>
 
   <name>Lockable Resources plugin</name>
@@ -113,7 +113,15 @@
       <groupId>io.jenkins.plugins</groupId>
       <artifactId>data-tables-api</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20230227</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-job</artifactId>
+    </dependency>
     <!-- Testing scope -->
     <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
@@ -129,11 +137,6 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
       <artifactId>workflow-cps</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.plugins.workflow</groupId>
-      <artifactId>workflow-job</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
